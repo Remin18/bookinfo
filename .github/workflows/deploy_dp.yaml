@@ -24,7 +24,13 @@ jobs:
 
       - name: Set up kubeconfig for EKS
         run: |
-          aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+          echo "Current AWS identity:"
+          aws sts get-caller-identity
+          echo "Cluster name: ${{ secrets.EKS_CLUSTER_NAME }}"
+          echo "Region: ${{ secrets.AWS_REGION }}"
+          aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+          kubectl config view --minify
+          kubectl auth can-i get pods --all-namespaces
 
       - name: Get Control Plane ID and upload TLS certs
         id: get_cp
@@ -57,6 +63,8 @@ jobs:
 
       - name: Create Kubernetes namespace and TLS secret
         run: |
+          kubectl version --client
+          kubectl cluster-info
           kubectl create ns kong || true
           kubectl create secret tls kong-cluster-cert -n kong \
             --cert=./certs/tls.crt \
