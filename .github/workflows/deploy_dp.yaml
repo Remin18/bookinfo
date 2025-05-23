@@ -28,9 +28,21 @@ jobs:
           aws sts get-caller-identity
           echo "Cluster name: ${{ secrets.EKS_CLUSTER_NAME }}"
           echo "Region: ${{ secrets.AWS_REGION }}"
+
+          # EKSクラスターの存在確認
+          aws eks describe-cluster --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+
+          # kubeconfigの更新
           aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
-          kubectl config view --minify
-          kubectl auth can-i get pods --all-namespaces
+
+          # 設定確認
+          kubectl config current-context
+
+          # 接続テスト（詳細なエラー情報を表示）
+          kubectl cluster-info --v=6
+
+          # 権限テスト
+          kubectl auth can-i get pods --all-namespaces --v=6
 
       - name: Get Control Plane ID and upload TLS certs
         id: get_cp
